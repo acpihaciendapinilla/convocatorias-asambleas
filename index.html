@@ -751,7 +751,7 @@ const RG_FIJO_INI = [
   {type:'punto', es:'Informe de gestión del administrador {año anterior}.', en:'Management report from the Administration for {año anterior}.', subs:[]}
 ];
 const RG_FIJO_FIN = [
-  {type:'punto', vota:true, es:'Votación para definir la fecha de la Asamblea Ordinaria del año {año}.', en:'Determine the date of the {año} Ordinary General Assembly.', subs:[]}
+  {type:'punto', vota:true, es:'Determinar la fecha de la Asamblea Ordinaria del año {año}.', en:'Determine the date of the {año} Ordinary General Assembly.', subs:[]}
 ];
 const RG_FIJO_ES = RG_FIJO_INI.concat(RG_FIJO_FIN).map(b=>b.es);
 const esRG = () => { const c=CONDOS.find(x=>x.id===S.condo); return !!(c && c.formato==='votacion'); };
