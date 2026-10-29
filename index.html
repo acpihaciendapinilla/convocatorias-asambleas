@@ -632,7 +632,10 @@ var CORE = (function(){
       else if(b.k==='p') content.push({text:pdfRuns(b.runs),alignment:b.left?'left':'justify',margin:[b.indent?18:0,b.top?(b.tight?6:14):0,0,b.tight?3:N.p]});
       else if(b.k==='break') content.push({text:'',pageBreak:'after'});
       else if(b.k==='sign') content.push({stack:b.lines.map(function(x){ return {text:x}; }),alignment:'center',margin:[0,22,0,0],unbreakable:true});
-      else if(b.k==='sigline'){ var x0=(612-N.m[0]-N.m[2]-200)/2; content.push({stack:[{canvas:[{type:'line',x1:x0,y1:0,x2:x0+200,y2:0,lineWidth:.7}]},{text:b.t,italics:true,alignment:'center',margin:[0,4,0,0]}],margin:N.sl,unbreakable:true}); }
+      else if(b.k==='sigline'){ var x0=(612-N.m[0]-N.m[2]-200)/2; var sig={stack:[{canvas:[{type:'line',x1:x0,y1:0,x2:x0+200,y2:0,lineWidth:.7}]},{text:b.t,italics:true,alignment:'center',margin:[0,4,0,0]}],margin:N.sl,unbreakable:true};
+        /* Si el documento ocupa más de una hoja, los párrafos finales (facultades del apoderado y lugar y fecha de la firma) pasan de hoja junto con la firma, para que la firma no quede sola */
+        if(doc.unaHoja===false){ var fin=[]; while(fin.length<2 && content.length && content[content.length-1].text) fin.unshift(content.pop()); delete sig.unbreakable; fin.push(sig); content.push({table:{widths:['*'],dontBreakRows:true,body:[[{stack:fin}]]},layout:'noBorders'});   /* fila de tabla sin bordes: pdfmake la pasa entera a la hoja siguiente sin dejar huecos */ }
+        else content.push(sig); }
       else if(b.k==='agendaVoto'){
         var st2=[], W=[ '*',40,44,50,62 ], box=function(){ return {text:'\u2610',font:assets.fonts&&assets.fonts.Box?'Box':undefined,alignment:'center',fontSize:N.fs+2}; };
         var tabla=function(rows){
@@ -687,7 +690,8 @@ var CORE = (function(){
       var pdf=pdfMake.createPdf(pdfDef(doc,assets,n),null,assets.fonts);
       pdf.getBuffer(function(){
         if(assets._pages>1 && n<hasta) return intento(n+1);
-        listo(pdf,n,assets._pages);
+        /* pdfmake modifica la definición al medir; se arma de nuevo para la descarga, si no la segunda pasada deja huecos */
+        listo(pdfMake.createPdf(pdfDef(doc,assets,n),null,assets.fonts),n,assets._pages);
       });
     })(desde);
   }
