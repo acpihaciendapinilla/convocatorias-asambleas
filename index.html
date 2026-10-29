@@ -733,17 +733,23 @@ const SUG_PUNTO = [
 const CON_PUBLICACION = ['malinches','almendros','brisas','azur','coralis'];
 /* Agenda base de Reserva de Golf (formato con votación). {año} = año del presupuesto; {año anterior} = el año previo. */
 const RG_AGENDA = [
-  {type:'punto', vota:true, es:'Votación de la autorización a la Administración para protocolizar, formalizar, por medios notariales y/o legales, los acuerdos adoptados por la Asamblea de Propietarios, de la presente asamblea.', en:'Voting of the authorization for the Administration to formally execute, through notarial and/or legal means, the resolutions adopted by the Owners\u2019 Assembly, of the present Assembly.', tES:'Autorización a la Administración', tEN:'Authorization to the Administration', subs:[]},
-  {type:'punto', es:'Informe de gestión del administrador {año anterior}.', en:'Management report from the Administration for {año anterior}.', subs:[]},
   {type:'punto', es:'Presupuesto {año}:', en:'{año} Budget:', subs:[
     {es:'Breve reporte del Comité Financiero {año anterior}.', en:'Brief report of the {año anterior} Finance Committee.'},
     {vota:true, es:'Presentación, votación del presupuesto y cuotas propuestas para el {año}.', en:'Presentation and voting of the proposed budget and fees for {año}.'},
     {vota:true, es:'Votación de las restricciones de uso del Fondo de Reserva.', en:'Vote on the restrictions on the use of the Reserve Fund.'}]},
   {type:'punto', es:'Otros asuntos:', en:'Other matters:', subs:[
     {es:'Nombramiento del Comité Financiero, Comité de Seguridad y Comité Legal.', en:'Appointment of the Finance Committee, Security Committee and Legal Committee.'}]},
-  {type:'proy'},
+  {type:'proy'}
+];
+/* Puntos fijos de Reserva de Golf: no se editan; solo se pone el año. D y E van al inicio; el de la fecha de la asamblea, al final. */
+const RG_FIJO_INI = [
+  {type:'punto', vota:true, es:'Votación de la autorización a la Administración para protocolizar, formalizar, por medios notariales y/o legales, los acuerdos adoptados por la Asamblea de Propietarios, de la presente asamblea.', en:'Voting of the authorization for the Administration to formally execute, through notarial and/or legal means, the resolutions adopted by the Owners\u2019 Assembly, of the present Assembly.', tES:'Autorización a la Administración', tEN:'Authorization to the Administration', subs:[]},
+  {type:'punto', es:'Informe de gestión del administrador {año anterior}.', en:'Management report from the Administration for {año anterior}.', subs:[]}
+];
+const RG_FIJO_FIN = [
   {type:'punto', vota:true, es:'Votación para definir la fecha de la Asamblea Ordinaria del año {año}.', en:'Determine the date of the {año} Ordinary General Assembly.', subs:[]}
 ];
+const RG_FIJO_ES = RG_FIJO_INI.concat(RG_FIJO_FIN).map(b=>b.es);
 const esRG = () => { const c=CONDOS.find(x=>x.id===S.condo); return !!(c && c.formato==='votacion'); };
 const MIN_DIAS = 8; // días naturales mínimos entre emisión y asamblea (aviso, no bloquea)
 
@@ -795,6 +801,9 @@ function renderAgendaRG(){
   let li=0, h='<p class="info" style="margin:0 0 10px">Reserva de Golf usa su propio formato de poder y proxy, con casillas de votación. Marque «Se vota» en los puntos que llevan casillas. Las marcas {año} y {año anterior} se reemplazan solas.</p>';
   const fixed=t=>`<div class="ag-fixed"><span class="l">${L[li++]}.</span><span>${esc(t)}</span><span class="lock">Fijo</span></div>`;
   h+=fixed('Asistencia.')+fixed('Verificación del quórum.')+fixed('Nombramiento del presidente y secretario ad-hoc de la asamblea de Condóminos.');
+  const anio=t=>{ const y=parseInt(anioP(),10); return t.replace(/\{año anterior\}/g,y?String(y-1):'[año]').replace(/\{año\}/g,Y); };
+  const fijoRG=b=>`<div class="ag-fixed"><span class="l">${L[li++]}.</span><span>${esc(anio(b.es))}</span><span class="lock">${b.vota?'Fijo · se vota':'Fijo'}</span></div>`;
+  RG_FIJO_INI.forEach(b=>{ h+=fijoRG(b); });
   S.rgBlocks.forEach((bk,bi)=>{
     const letter=(bk.type==='proy'&&S.sinProy)?'—':L[li++];
     if(bk.type==='proy'){
@@ -817,6 +826,7 @@ function renderAgendaRG(){
     }
   });
   h+=`<div class="chips"><button class="add" type="button" data-add="rgBlocks">+ Agregar punto de agenda</button><button class="chip" type="button" data-rgreset="1">Restablecer agenda base de Reserva de Golf</button></div>`;
+  RG_FIJO_FIN.forEach(b=>{ h+=fijoRG(b); });
   h+=fixed('Acta en firme.');
   $('#agenda').innerHTML=h;
   $$('#agenda textarea').forEach(grow);
@@ -892,7 +902,7 @@ function data(){
   const c=CONDOS.find(x=>x.id===S.condo);
   return {condo:c||null, tipo:S.tipo, mod:S.mod, lugarSel:$('#lugar').value, otroEs:$('#otroEs').value, otroEn:$('#otroEn').value,
     enlace:$('#enlace').value, enlaceLuego:$('#enlaceLuego').checked, fecha:$('#fecha').value, hora:horaVal(), emision:$('#emision').value,
-    anioP:anioP(), budgetExtra:S.budgetExtra, blocks:S.blocks, projects:S.projects, sinProy:S.sinProy, rg:esRG(), rgBlocks:S.rgBlocks};
+    anioP:anioP(), budgetExtra:S.budgetExtra, blocks:S.blocks, projects:S.projects, sinProy:S.sinProy, rg:esRG(), rgBlocks:RG_FIJO_INI.concat(S.rgBlocks,RG_FIJO_FIN)};
 }
 
 /* ---------- vista previa HTML ---------- */
@@ -1072,7 +1082,7 @@ $('#copyAsunto').onclick=async()=>{ const ok=await copy(last.m.asunto); toast(ok
 const FIELDS=['lugar','otroEs','otroEn','enlace','fecha','hH','hM','hAP','emision','anioP','docOtroEs','docOtroEn'];
 function save(){ try{ const f={}; FIELDS.forEach(k=>f[k]=$('#'+k).value); f.enlaceLuego=$('#enlaceLuego').checked; f.docOtro=$('#docOtro').checked; f.docs=$$('.doc').map(x=>x.checked);
   localStorage.setItem(DRAFT,JSON.stringify({S,f})); }catch(e){} }
-function load(){ try{ const raw=localStorage.getItem(DRAFT); if(!raw) return false; const {S:s,f}=JSON.parse(raw); S=Object.assign(fresh(),s);
+function load(){ try{ const raw=localStorage.getItem(DRAFT); if(!raw) return false; const {S:s,f}=JSON.parse(raw); S=Object.assign(fresh(),s); if(Array.isArray(S.rgBlocks)) S.rgBlocks=S.rgBlocks.filter(b=>!(b.type==='punto'&&(RG_FIJO_ES.includes(b.es)||/protocolizar|Informe de gestión|fecha de la Asamblea Ordinaria/i.test(b.es||''))));  /* borradores viejos: los puntos fijos ya no se guardan */
   FIELDS.forEach(k=>{ if(f[k]!==undefined) $('#'+k).value=f[k]; }); $('#enlaceLuego').checked=!!f.enlaceLuego; $('#docOtro').checked=!!f.docOtro; (f.docs||[]).forEach((v,i)=>{ const el=$$('.doc')[i]; if(el) el.checked=v; }); return true; }catch(e){ return false; } }
 function todayISO(){ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
 function defaults(){ FIELDS.forEach(k=>{ const el=$('#'+k); if(el.tagName!=='SELECT') el.value=''; });
