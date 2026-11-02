@@ -69,6 +69,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .ag{display:flex;flex-direction:column;gap:6px}
 .ag-fixed{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:7px 10px;border-radius:8px;background:var(--tint);font-size:.92rem}
 .ag-fixed .l,.ag-item .l{font-weight:700;color:var(--accent)}
+.ag-fixed.mov{grid-template-columns:28px minmax(0,1fr) auto auto;align-items:center}
+.ag-fixed.mov .icons{display:flex;gap:4px}
+.ag-fixed.mov .ib{width:28px;height:28px}
 .lock{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
 .ag-subs{display:flex;flex-direction:column;gap:6px;margin:2px 0 4px 20px}
 .ag-subfixed{font-size:.88rem;color:var(--muted);padding:2px 0}
@@ -91,6 +94,8 @@ textarea{overflow:hidden}
 .ib:disabled{opacity:.35;cursor:not-allowed}
 .add{border:1.5px dashed var(--olive);background:transparent;color:var(--accent);border-radius:10px;padding:9px 12px;font:inherit;font-weight:700;cursor:pointer;text-align:left}
 .add:hover{background:var(--accent-soft)}
+.docx{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;padding:10px;border:1px solid var(--line);border-radius:8px}
+@media (max-width:520px){.docx{grid-template-columns:minmax(0,1fr) auto}.docx label:nth-child(2){grid-row:2}}
 .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .chips .lab{font-size:.78rem;color:var(--muted);margin-right:2px}
 .chip{border:1px solid var(--line);background:var(--tint);color:var(--fg);border-radius:999px;padding:5px 11px;font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
@@ -142,6 +147,29 @@ textarea{overflow:hidden}
 .btn{font:inherit;font-weight:700;border-radius:var(--r);padding:12px 16px;min-height:48px;cursor:pointer;border:1.5px solid var(--accent);background:var(--accent);color:var(--accent-fg);flex:1 1 200px}
 .btn.ghost{background:transparent;color:var(--accent)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
+/* Edición manual del texto */
+.edbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.sheet [data-e]{white-space:pre-line}
+.sheet.msg [data-e]{white-space:pre-wrap}
+.hl [data-e].ed{background:#e3eefa;box-shadow:0 0 0 2px #e3eefa;border-radius:2px}
+.hl [data-e].edx{background:var(--bad-soft);box-shadow:0 0 0 2px var(--bad-soft);border-radius:2px}
+.sheet.editing{box-shadow:0 0 0 2px var(--accent)}
+.sheet.editing [data-e]{outline:1px dashed #b8c4d2;outline-offset:1px;cursor:text}
+.sheet.editing [data-e]:focus{outline:2px solid var(--accent);background:#fffdf3}
+#asunto[contenteditable="true"]{outline:1px dashed #b8c4d2;outline-offset:2px;padding:0 2px}
+.ednote{margin-bottom:8px}
+.ednote button{margin-left:6px}
+dialog.ask{border:0;border-radius:12px;padding:20px;max-width:420px;width:calc(100% - 32px);box-shadow:0 10px 40px rgba(0,0,0,.25);color:var(--fg);font-family:var(--f-body)}
+dialog.ask::backdrop{background:rgba(30,30,10,.35)}
+dialog.ask h3{margin:0 0 8px;font-size:1.05rem}
+dialog.ask p{margin:0 0 16px;font-size:.92rem;color:var(--muted)}
+dialog.ask .actions{margin-top:0}
+dialog.ask .btn{min-height:42px;padding:9px 14px}
+/* Agenda: puntos que se pueden contraer */
+.ag-item.col>:not(.ag-head){display:none}
+.ag-item.col .ag-head .t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-item.col .ag-head .t small{color:var(--muted);font-weight:500}
 .link{background:none;border:0;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:0}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20;max-width:calc(100% - 32px)}
 .toast.show{opacity:1}
@@ -232,11 +260,8 @@ textarea.fallback{position:fixed;left:-9999px}
           <label class="check"><input type="checkbox" class="doc" id="docPres" data-es="Presupuesto" data-en="Budget" checked> Presupuesto <span class="en">· Budget</span></label>
           <label class="check"><input type="checkbox" class="doc" id="docProy" data-es="Propuesta de proyectos" data-en="Project proposals" checked> Propuesta de proyectos <span class="en">· Project proposals</span></label>
           <label class="check"><input type="checkbox" class="doc" data-es="Cuotas condominales." data-en="Condominium fees." checked> Cuotas condominales <span class="en">· Condominium fees</span></label>
-          <label class="check"><input type="checkbox" id="docOtro"> Otro documento</label>
-          <div class="row" id="docOtroBox" hidden>
-            <label class="f">Nombre en español<input type="text" id="docOtroEs"></label>
-            <label class="f">Nombre en inglés<input type="text" id="docOtroEn"></label>
-          </div>
+          <div id="docsExtra"></div>
+          <button class="add" type="button" id="addDoc">+ Agregar documento</button>
         </div>
       </section>
     </div>
@@ -255,10 +280,20 @@ textarea.fallback{position:fixed;left:-9999px}
             <button type="button" data-v="mail" aria-pressed="true" style="flex:0 1 auto;padding:7px 12px">Correo (Sistema HAC)</button>
             <button type="button" data-v="wa" aria-pressed="false" style="flex:0 1 auto;padding:7px 12px">WhatsApp</button>
           </div>
+          <div class="edbar">
+            <button class="chip" type="button" id="edStart">✎ Editar texto</button>
+            <span class="edbar" id="edTools" hidden>
+              <button class="ib" type="button" data-cmd="bold" aria-label="Negrita" title="Negrita"><b>N</b></button>
+              <button class="ib" type="button" data-cmd="italic" aria-label="Cursiva" title="Cursiva"><i>K</i></button>
+              <button class="chip" type="button" id="edCancel">Cancelar</button>
+              <button class="chip pri" type="button" id="edSave">Guardar cambios</button>
+            </span>
+          </div>
         </div>
+        <div class="ednote" id="edNote" hidden></div>
         <div id="asuntoRow" class="hint" style="margin-bottom:8px" hidden><strong style="color:var(--fg)">Asunto:</strong> <span id="asunto"></span></div>
         <div class="desk"><div class="sheet hl" id="sheet" tabindex="0" aria-label="Vista previa"></div></div>
-        <div class="legend"><span><span class="v" style="background:var(--var-bg)">amarillo</span> datos que cambian</span><span><span class="v miss">rojo</span> falta completar</span></div>
+        <div class="legend"><span><span class="v" style="background:var(--var-bg)">amarillo</span> datos que cambian</span><span><span class="v miss">rojo</span> falta completar</span><span id="edLeg" hidden><span class="v" style="background:#e3eefa">azul</span> texto editado a mano</span></div>
       </section>
 
       <section class="panel confirm">
@@ -286,6 +321,7 @@ textarea.fallback{position:fixed;left:-9999px}
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<dialog class="ask" id="ask"><h3 id="askT"></h3><p id="askP"></p><div class="actions"><button class="btn ghost" type="button" id="askNo"></button><button class="btn" type="button" id="askOk"></button></div></dialog>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
@@ -409,10 +445,15 @@ var CORE = (function(){
     function agenda(lang,pub){
       var F=FIJO[pub==='proxy'?'enp':(pub?'pub':lang)], items=[], yv=Y||'[año]'; pub=pub===true;
       var txtL=lang==='es'?'punto en español':'punto en inglés';
+      /* Los puntos fijos pueden venir dentro de la lista ({type:'fijo', id}) para que el administrador los ordene; si no vienen, van en su lugar de siempre */
+      function fijo(bk){ if(bk.id==='bud'){ var bs=[[F.b1(yv)],[F.b2(yv)]]; (d.budgetExtra||[]).forEach(function(x){ bs.push(texto(x[lang],lang,false,pub,lang==='es'?'subpunto en español':'subpunto en inglés')); }); items.push({runs:[F.bud(yv)],subs:bs,fijo:'bud'}); }
+        else if(F[bk.id]) items.push({runs:[F[bk.id]],subs:[],fijo:bk.id}); }
       if(d.rg){
-        [F.A,F.B,F.C].forEach(function(t){ items.push({runs:[t],subs:[]}); });
+        var conFijosRG=(d.rgBlocks||[]).some(function(b){ return b.type==='fijo'; });
+        if(!conFijosRG) ['A','B','C'].forEach(function(k){ items.push({runs:[F[k]],subs:[],fijo:k}); });
         (d.rgBlocks||[]).forEach(function(bk){
-          if(bk.type==='proy'){
+          if(bk.type==='fijo') fijo(bk);
+          else if(bk.type==='proy'){
             if(d.sinProy) return;
             var ps=(d.projects||[]).map(function(p){ return texto(p[lang],lang,false,pub,lang==='es'?'proyecto en español':'proyecto en inglés'); });
             if(!ps.length) need(null,'al menos un proyecto');
@@ -425,16 +466,15 @@ var CORE = (function(){
             items.push(it);
           }
         });
-        items.push({runs:[F.Z],subs:[]});   /* Reserva de Golf: la protocolización va en el punto D */
+        if(!conFijosRG) items.push({runs:[F.Z],subs:[],fijo:'Z'});   /* Reserva de Golf: la protocolización va en el punto D */
         items.forEach(function(it,i){ it.l=LETRAS[i]; });
         return items;
       }
-      [F.A,F.B,F.C,F.D].forEach(function(t){ items.push({runs:[t],subs:[]}); });
-      var bs=[[F.b1(yv)],[F.b2(yv)]];
-      (d.budgetExtra||[]).forEach(function(x){ bs.push(texto(x[lang],lang,false,pub,lang==='es'?'subpunto en español':'subpunto en inglés')); });
-      items.push({runs:[F.bud(yv)],subs:bs});
+      var conFijos=(d.blocks||[]).some(function(b){ return b.type==='fijo'; });
+      if(!conFijos) ['A','B','C','D','bud'].forEach(function(k){ fijo({id:k}); });
       (d.blocks||[]).forEach(function(bk){
-        if(bk.type==='proy'){
+        if(bk.type==='fijo') fijo(bk);
+        else if(bk.type==='proy'){
           if(d.sinProy) return;
           var ps=(d.projects||[]).map(function(p){ return texto(p[lang],lang,false,pub,lang==='es'?'proyecto en español':'proyecto en inglés'); });
           if(!ps.length) need(null,'al menos un proyecto');
@@ -444,7 +484,7 @@ var CORE = (function(){
           items.push({runs:texto(bk[lang],lang,subs.length>0,pub,txtL),subs:subs});
         }
       });
-      items.push({runs:[F.Y],subs:[]},{runs:[F.Z],subs:[]});
+      if(!conFijos){ fijo({id:'Y'}); fijo({id:'Z'}); }
       items.forEach(function(it,i){ it.l=LETRAS[i]; });
       return items;
     }
@@ -582,9 +622,9 @@ var CORE = (function(){
       docs.poder.unaHoja=false; docs.proxy.unaHoja=false;
       /* Reserva de Golf: punto C y título de proyectos según la versión de Erika (poder, notice y proxy) */
       var agPOD=agenda('es',false);
-      agPOD[2].runs=['Nombramiento del presidente ad-hoc y secretario ad-hoc de la Asamblea de Condóminos.'];
+      agPOD.forEach(function(it){ if(it.fijo==='C') it.runs=['Nombramiento del presidente ad-hoc y secretario ad-hoc de la Asamblea de Condóminos.']; });
       agPOD.forEach(function(it){ if(it.esProy) it.runs=['Presentación, análisis y votación de los proyectos a ejecutar durante el año '+(Y||'[año]')+':']; });
-      [agEN,agPX].forEach(function(ag){ ag[2].runs=['Appointment of the president ad-hoc and secretary ad-hoc of the condominium assembly.']; });
+      [agEN,agPX].forEach(function(ag){ ag.forEach(function(it){ if(it.fijo==='C') it.runs=['Appointment of the president ad-hoc and secretary ad-hoc of the condominium assembly.']; }); });
       docs.poder.blocks=[
         {k:'title',t:'PODER ESPECIAL'},
         {k:'p',runs:['Yo, ',{t:'',line:1}],left:1},
@@ -754,6 +794,12 @@ const RG_FIJO_FIN = [
   {type:'punto', vota:true, es:'Determinar la fecha de la Asamblea Ordinaria del año {año}.', en:'Determine the date of the {año} Ordinary General Assembly.', subs:[]}
 ];
 const RG_FIJO_ES = RG_FIJO_INI.concat(RG_FIJO_FIN).map(b=>b.es);
+/* Puntos fijos dentro de la lista: el texto no se edita, pero se pueden mover con ↑ ↓ */
+const RG_FIJO_MAP = {rgD:RG_FIJO_INI[0], rgE:RG_FIJO_INI[1], rgI:RG_FIJO_FIN[0]};
+const FIJO_TXT = {A:'Asistencia.', B:'Verificación del quórum.', C:'Nombramiento del presidente y secretario ad-hoc de la asamblea de Condóminos.', D:'Informe de gestión del administrador.', Y:'Protocolización de acta.', Z:'Acta en firme.'};
+const F_ = id=>({type:'fijo',id});
+const BASE_BLOCKS = () => [F_('A'),F_('B'),F_('C'),F_('D'),F_('bud'),{type:'proy'},F_('Y'),F_('Z')];
+const BASE_RG = () => [F_('A'),F_('B'),F_('C'),F_('rgD'),F_('rgE')].concat(JSON.parse(JSON.stringify(RG_AGENDA)),[F_('rgI'),F_('Z')]);
 const esRG = () => { const c=CONDOS.find(x=>x.id===S.condo); return !!(c && c.formato==='votacion'); };
 const MIN_DIAS = 8; // días naturales mínimos entre emisión y asamblea (aviso, no bloquea)
 
@@ -765,7 +811,7 @@ const DRAFT='convocatorias-borrador-v1';
 
 let S = fresh();
 function fresh(){ return {condo:null,tipo:null,mod:null,tab:'conv',msgMode:'mail',anioTocado:false,
-  budgetExtra:[], blocks:[{type:'proy'}], projects:[blank()], sinProy:false, rgBlocks:JSON.parse(JSON.stringify(RG_AGENDA))}; }
+  budgetExtra:[], blocks:BASE_BLOCKS(), projects:[blank()], sinProy:false, rgBlocks:BASE_RG(), edits:{}, docsExtra:[]}; }
 
 /* ---------- tarjetas de condominio ---------- */
 CONDOS.forEach(c=>{
@@ -800,18 +846,22 @@ function iconBtns(kind,i,len){
 function subRow(n,lab,icons,body,st){ return `<div class="sub-row" ${st?`style="${st}"`:''}><div class="sub-top"><span class="n">${n}.</span><span class="sub-lab">${lab}</span>${icons}</div>${body}</div>`; }
 function grow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+3)+'px'; }
 function voteBox(path,on,txt){ return `<label class="check" style="font-size:.82rem;font-weight:600"><input type="checkbox" data-path="${path}" ${on?'checked':''}> ${txt||'Se vota (lleva casillas en el poder)'}</label>`; }
+/* Contraer / expandir puntos de la agenda (el estado se guarda en el propio punto: _c) */
+function sinBorrar(html){ return html.replace(/<button class="ib" type="button" data-act="del"[^>]*>✕<\/button>/,''); }
+function filaFija(letter,txt,lockTxt,kind,bi,len){ return `<div class="ag-fixed mov"><span class="l">${letter}.</span><span>${txt}</span><span class="lock">${lockTxt}</span>${sinBorrar(iconBtns(kind,bi,len))}</div>`; }
+function colBtn(path,c){ return `<button class="ib" type="button" data-col="${path}" aria-expanded="${!c}" aria-label="${c?'Expandir punto':'Contraer punto'}" title="${c?'Expandir':'Contraer'}">${c?'▸':'▾'}</button>`; }
+function resumen(bk,Y){ if(bk.type==='proy'){ const n=S.sinProy?0:S.projects.filter(p=>(p.es||'').trim()).length; return `Proyectos ${esc(Y)} <small>· ${S.sinProy?'sin proyectos':n+' proyecto'+(n===1?'':'s')}</small>`; }
+  const t=(bk.es||'').replace(/\{año anterior\}/g,(+Y-1)||'[año]').replace(/\{año\}/g,Y).trim(); const n=(bk.subs||[]).length;
+  return `${t?esc(t):'<small>(sin texto)</small>'}${n?` <small>· ${n} subpunto${n>1?'s':''}</small>`:''}`; }
 function renderAgendaRG(){
   const Y=anioP()||'[año]', L='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let li=0, h='<p class="info" style="margin:0 0 10px">Reserva de Golf usa su propio formato de poder y proxy, con casillas de votación. Marque «Se vota» en los puntos que llevan casillas. Las marcas {año} y {año anterior} se reemplazan solas.</p>';
-  const fixed=t=>`<div class="ag-fixed"><span class="l">${L[li++]}.</span><span>${esc(t)}</span><span class="lock">Fijo</span></div>`;
-  h+=fixed('Asistencia.')+fixed('Verificación del quórum.')+fixed('Nombramiento del presidente y secretario ad-hoc de la asamblea de Condóminos.');
   const anio=t=>{ const y=parseInt(anioP(),10); return t.replace(/\{año anterior\}/g,y?String(y-1):'[año]').replace(/\{año\}/g,Y); };
-  const fijoRG=b=>`<div class="ag-fixed"><span class="l">${L[li++]}.</span><span>${esc(anio(b.es))}</span><span class="lock">${b.vota?'Fijo · se vota':'Fijo'}</span></div>`;
-  RG_FIJO_INI.forEach(b=>{ h+=fijoRG(b); });
   S.rgBlocks.forEach((bk,bi)=>{
+    if(bk.type==='fijo'){ const f=RG_FIJO_MAP[bk.id]; h+=filaFija(L[li++], esc(f?anio(f.es):FIJO_TXT[bk.id]), f&&f.vota?'Fijo · se vota':'Fijo','rgBlocks',bi,S.rgBlocks.length); return; }
     const letter=(bk.type==='proy'&&S.sinProy)?'—':L[li++];
     if(bk.type==='proy'){
-      h+=`<div class="ag-item proy"><div class="ag-head"><span class="l">${letter}.</span><span class="t">Presentación, análisis y votación de los proyectos a realizar en ${esc(Y)}: <span class="lock">Título fijo · se votan</span></span>${iconBtns('rgBlocksProy',bi,S.rgBlocks.length).replace(/<button class="ib" type="button" data-act="del"[^>]*>✕<\/button>/,'')}</div>
+      h+=`<div class="ag-item proy${bk._c?' col':''}"><div class="ag-head">${colBtn('rgBlocks.'+bi,bk._c)}<span class="l">${letter}.</span><span class="t">${bk._c?resumen(bk,Y):`Presentación, análisis y votación de los proyectos a realizar en ${esc(Y)}: <span class="lock">Título fijo · se votan</span>`}</span>${iconBtns('rgBlocksProy',bi,S.rgBlocks.length).replace(/<button class="ib" type="button" data-act="del"[^>]*>✕<\/button>/,'')}</div>
         <label class="check" style="font-size:.85rem"><input type="checkbox" id="sinProy" ${S.sinProy?'checked':''}> Esta asamblea no tiene proyectos</label>`;
       if(!S.sinProy){
         S.projects.forEach((p,i)=>{ h+=subRow(i+1,'Proyecto',iconBtns('projects',i,S.projects.length),pair(p,'projects.'+i,'Votación del proyecto de …','Voting on the … project')); });
@@ -820,7 +870,7 @@ function renderAgendaRG(){
       h+=`</div>`;
     } else {
       const subs=bk.subs||[];
-      h+=`<div class="ag-item"><div class="ag-head"><span class="l">${letter}.</span><span class="t">Punto de agenda</span>${iconBtns('rgBlocks',bi,S.rgBlocks.length)}</div>${pair(bk,'rgBlocks.'+bi,'Escriba el punto en español','Write the item in English')}`;
+      h+=`<div class="ag-item${bk._c?' col':''}"><div class="ag-head">${colBtn('rgBlocks.'+bi,bk._c)}<span class="l">${letter}.</span><span class="t">${bk._c?resumen(bk,Y):'Punto de agenda'}</span>${iconBtns('rgBlocks',bi,S.rgBlocks.length)}</div>${pair(bk,'rgBlocks.'+bi,'Escriba el punto en español','Write the item in English')}`;
       if(!subs.length){
         h+=voteBox('rgBlocks.'+bi+'.vota',bk.vota);
         if(bk.vota) h+=`<div class="pair"><label>Texto en la tabla (español)${ta(bk.tES,'Opcional. Si se deja vacío, va el texto del punto','rgBlocks.'+bi+'.tES')}</label><label>Texto en la tabla (inglés)${ta(bk.tEN,'Optional','rgBlocks.'+bi+'.tEN')}</label></div>`;
@@ -830,8 +880,6 @@ function renderAgendaRG(){
     }
   });
   h+=`<div class="chips"><button class="add" type="button" data-add="rgBlocks">+ Agregar punto de agenda</button><button class="chip" type="button" data-rgreset="1">Restablecer agenda base de Reserva de Golf</button></div>`;
-  RG_FIJO_FIN.forEach(b=>{ h+=fijoRG(b); });
-  h+=fixed('Acta en firme.');
   $('#agenda').innerHTML=h;
   $$('#agenda textarea').forEach(grow);
 }
@@ -839,18 +887,20 @@ function renderAgenda(){
   if(esRG()) return renderAgendaRG();
   const Y=anioP()||'[año]', L='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let li=0, h='';
-  const fixed=t=>`<div class="ag-fixed"><span class="l">${L[li++]}.</span><span>${esc(t)}</span><span class="lock">Fijo</span></div>`;
-  h+=fixed('Asistencia.')+fixed('Verificación del quórum.')+fixed('Nombramiento del presidente y secretario ad-hoc de la asamblea de Condóminos.')+fixed('Informe de gestión del administrador.');
-  // Presupuesto
-  h+=fixed(`Presupuesto ${Y}:`);
-  h+=`<div class="ag-subs"><div class="ag-subfixed">1. Presentación y análisis de la propuesta del presupuesto para el año ${esc(Y)}.</div><div class="ag-subfixed">2. Votación y aprobación de presupuesto y cuotas propuestas para el ${esc(Y)}.</div>`;
-  S.budgetExtra.forEach((x,i)=>{ h+=subRow(i+3,'Subpunto de presupuesto',iconBtns('budgetExtra',i,S.budgetExtra.length),pair(x,'budgetExtra.'+i,'Subpunto en español','Subpunto en inglés')); });
-  h+=`<div class="chips"><button class="add" type="button" data-add="budgetExtra">+ Subpunto de presupuesto</button><span class="lab">Sugeridos:</span>${SUG_BUDGET.map((s,i)=>`<button class="chip" type="button" data-sug="budget" data-i="${i}" ${S.budgetExtra.some(x=>x.es===s.es)?'disabled':''}>${esc(s.k)}</button>`).join('')}</div></div>`;
-  // Bloques
   S.blocks.forEach((bk,bi)=>{
+    if(bk.type==='fijo'){
+      if(bk.id!=='bud'){ h+=filaFija(L[li++],esc(FIJO_TXT[bk.id]),'Fijo','blocks',bi,S.blocks.length); return; }
+      // Presupuesto: título y dos subpuntos fijos; se le pueden agregar subpuntos
+      const n=S.budgetExtra.length+2;
+      h+=`<div class="ag-item${bk._c?' col':''}"><div class="ag-head">${colBtn('blocks.'+bi,bk._c)}<span class="l">${L[li++]}.</span><span class="t">Presupuesto ${esc(Y)}: ${bk._c?`<small>· ${n} subpuntos</small>`:'<span class="lock">Fijo</span>'}</span>${sinBorrar(iconBtns('blocks',bi,S.blocks.length))}</div>`;
+      h+=`<div class="ag-subs"><div class="ag-subfixed">1. Presentación y análisis de la propuesta del presupuesto para el año ${esc(Y)}.</div><div class="ag-subfixed">2. Votación y aprobación de presupuesto y cuotas propuestas para el ${esc(Y)}.</div>`;
+      S.budgetExtra.forEach((x,i)=>{ h+=subRow(i+3,'Subpunto de presupuesto',iconBtns('budgetExtra',i,S.budgetExtra.length),pair(x,'budgetExtra.'+i,'Subpunto en español','Subpunto en inglés')); });
+      h+=`<div class="chips"><button class="add" type="button" data-add="budgetExtra">+ Subpunto de presupuesto</button><span class="lab">Sugeridos:</span>${SUG_BUDGET.map((s,i)=>`<button class="chip" type="button" data-sug="budget" data-i="${i}" ${S.budgetExtra.some(x=>x.es===s.es)?'disabled':''}>${esc(s.k)}</button>`).join('')}</div></div></div>`;
+      return;
+    }
     const letter=(bk.type==='proy'&&S.sinProy)?'—':L[li++];
     if(bk.type==='proy'){
-      h+=`<div class="ag-item proy"><div class="ag-head"><span class="l">${letter}.</span><span class="t">Presentación, análisis y votación de los proyectos a realizar en ${esc(Y)}: <span class="lock">Título fijo</span></span>${iconBtns('blocksProy',bi,S.blocks.length).replace(/<button class="ib" type="button" data-act="del"[^>]*>✕<\/button>/,'')}</div>
+      h+=`<div class="ag-item proy${bk._c?' col':''}"><div class="ag-head">${colBtn('blocks.'+bi,bk._c)}<span class="l">${letter}.</span><span class="t">${bk._c?resumen(bk,Y):`Presentación, análisis y votación de los proyectos a realizar en ${esc(Y)}: <span class="lock">Título fijo</span>`}</span>${iconBtns('blocksProy',bi,S.blocks.length).replace(/<button class="ib" type="button" data-act="del"[^>]*>✕<\/button>/,'')}</div>
         <label class="check" style="font-size:.85rem"><input type="checkbox" id="sinProy" ${S.sinProy?'checked':''}> Esta asamblea no tiene proyectos</label>`;
       if(!S.sinProy){
         S.projects.forEach((p,i)=>{ h+=subRow(i+1,'Proyecto',iconBtns('projects',i,S.projects.length),pair(p,'projects.'+i,'Votación y aprobación del proyecto de …','Voting and approval of the … project')); });
@@ -858,36 +908,38 @@ function renderAgenda(){
       }
       h+=`</div>`;
     } else {
-      h+=`<div class="ag-item"><div class="ag-head"><span class="l">${letter}.</span><span class="t">Punto de agenda</span>${iconBtns('blocks',bi,S.blocks.length)}</div>${pair(bk,'blocks.'+bi,'Escriba el punto en español','Write the item in English')}`;
+      h+=`<div class="ag-item${bk._c?' col':''}"><div class="ag-head">${colBtn('blocks.'+bi,bk._c)}<span class="l">${letter}.</span><span class="t">${bk._c?resumen(bk,Y):'Punto de agenda'}</span>${iconBtns('blocks',bi,S.blocks.length)}</div>${pair(bk,'blocks.'+bi,'Escriba el punto en español','Write the item in English')}`;
       (bk.subs||[]).forEach((x,i)=>{ h+=subRow(i+1,'Subpunto',iconBtns('subs:'+bi,i,bk.subs.length),pair(x,'blocks.'+bi+'.subs.'+i,'Subpunto en español','Subpunto en inglés'),'margin-left:22px'); });
       h+=`<button class="add" type="button" data-add="subs:${bi}" style="margin-left:22px">+ Subpunto</button></div>`;
     }
   });
   h+=`<div class="chips"><button class="add" type="button" data-add="blocks">+ Agregar punto de agenda</button><span class="lab">Sugeridos:</span>${SUG_PUNTO.map((s,i)=>`<button class="chip" type="button" data-sug="punto" data-i="${i}">${esc(s.k)}</button>`).join('')}</div>`;
-  h+=fixed('Protocolización de acta.')+fixed('Acta en firme.');
   $('#agenda').innerHTML=h;
   $$('#agenda textarea').forEach(grow);
 }
+/* Un punto nuevo va antes del cierre (protocolización / fecha de la próxima asamblea / acta en firme) */
+function meter(list,it){ const i=list.findIndex(b=>b.type==='fijo'&&['Y','Z','rgI'].includes(b.id)); if(i<0) list.push(it); else list.splice(i,0,it); }
 function getPath(path){ const p=path.split('.'); let o=S; for(let i=0;i<p.length-1;i++) o=o[p[i]]; return [o,p[p.length-1]]; }
 function listFor(kind){ if(kind==='budgetExtra') return S.budgetExtra; if(kind==='projects') return S.projects; if(kind==='blocks'||kind==='blocksProy') return S.blocks; if(kind.startsWith('subs:')) return S.blocks[+kind.slice(5)].subs; if(kind==='rgBlocks'||kind==='rgBlocksProy') return S.rgBlocks; if(kind.startsWith('rgsubs:')) return S.rgBlocks[+kind.slice(7)].subs; }
 $('#agenda').addEventListener('input',e=>{ const t=e.target; if(t.tagName==='TEXTAREA') grow(t); if(t.dataset.path&&t.type!=='checkbox'){ const [o,k]=getPath(t.dataset.path); o[k]=t.value; changed(false); } });
 $('#agenda').addEventListener('change',e=>{ const t=e.target; if(t.id==='sinProy'){ S.sinProy=t.checked; renderAgenda(); changed(); } else if(t.type==='checkbox'&&t.dataset.path){ const [o,k]=getPath(t.dataset.path); o[k]=t.checked; renderAgenda(); changed(); } });
 $('#agenda').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.col){ const [o,k]=getPath(b.dataset.col); o[k]._c=!o[k]._c; renderAgenda(); save(); return; }
   const Y=anioP()||'';
   if(b.dataset.add){
     const k=b.dataset.add;
-    if(k==='blocks'){ S.blocks.push({type:'punto',es:'',en:'',subs:[]}); }
-    else if(k==='rgBlocks'){ S.rgBlocks.push({type:'punto',es:'',en:'',subs:[]}); }
+    if(k==='blocks'){ meter(S.blocks,{type:'punto',es:'',en:'',subs:[]}); }
+    else if(k==='rgBlocks'){ meter(S.rgBlocks,{type:'punto',es:'',en:'',subs:[]}); }
     else listFor(k).push(blank());
     renderAgenda(); changed(); focusLast(k); return;
   }
-  if(b.dataset.rgreset){ S.rgBlocks=JSON.parse(JSON.stringify(RG_AGENDA)); renderAgenda(); changed(); return; }
+  if(b.dataset.rgreset){ S.rgBlocks=BASE_RG(); renderAgenda(); changed(); return; }
   if(b.dataset.sug){
     const s=(b.dataset.sug==='budget'?SUG_BUDGET:SUG_PUNTO)[+b.dataset.i];
     if(b.dataset.sug==='budget') S.budgetExtra.push({es:s.es,en:s.en});
     else { const it={type:'punto',es:s.es.replace('{Y}',Y),en:s.en.replace('{Y}',Y),subs:s.subs?[blank()]:[]};
-      if(s.subs){ const pi=S.blocks.findIndex(x=>x.type==='proy'); S.blocks.splice(pi<0?S.blocks.length:pi,0,it); } else S.blocks.push(it); }
+      if(s.subs){ const pi=S.blocks.findIndex(x=>x.type==='proy'); if(pi<0) meter(S.blocks,it); else S.blocks.splice(pi,0,it); } else meter(S.blocks,it); }
     renderAgenda(); changed(); return;
   }
   if(b.dataset.act){
@@ -898,7 +950,15 @@ $('#agenda').addEventListener('click',e=>{
     renderAgenda(); changed();
   }
 });
-function focusLast(k){ const sel=(k==='blocks'||k==='rgBlocks')?`[data-path^="${k}."][data-path$=".es"]`:`[data-path^="${k.startsWith('subs:')?'blocks.'+k.slice(5)+'.subs':k.startsWith('rgsubs:')?'rgBlocks.'+k.slice(7)+'.subs':k}."][data-path$=".es"]`; const els=$$('#agenda '+sel); const el=els[els.length-1]; if(el) el.focus(); }
+function focusLast(k){ if(k==='blocks'||k==='rgBlocks'){ const L=k==='blocks'?S.blocks:S.rgBlocks; let i=L.findIndex(b=>b.type==='fijo'&&['Y','Z','rgI'].includes(b.id)); i=(i<0?L.length:i)-1; const el=$(`#agenda [data-path="${k}.${i}.es"]`); if(el){ el.focus(); return; } } const sel=(k==='blocks'||k==='rgBlocks')?`[data-path^="${k}."][data-path$=".es"]`:`[data-path^="${k.startsWith('subs:')?'blocks.'+k.slice(5)+'.subs':k.startsWith('rgsubs:')?'rgBlocks.'+k.slice(7)+'.subs':k}."][data-path$=".es"]`; const els=$$('#agenda '+sel); const el=els[els.length-1]; if(el) el.focus(); }
+
+/* ---------- documentos adjuntos adicionales ---------- */
+function renderDocs(){
+  $('#docsExtra').innerHTML=S.docsExtra.map((x,i)=>`<div class="docx"><label class="f">Nombre en español<input type="text" data-dx="${i}.es" value="${esc(x.es||'')}" placeholder="Ej.: Estados financieros"></label><label class="f">Nombre en inglés<input type="text" data-dx="${i}.en" value="${esc(x.en||'')}" placeholder="E.g.: Financial statements"></label><button class="ib" type="button" data-dxdel="${i}" aria-label="Quitar documento" title="Quitar">✕</button></div>`).join('');
+}
+$('#addDoc').onclick=()=>{ S.docsExtra.push({es:'',en:''}); renderDocs(); changed(); const els=$$('#docsExtra [data-dx$=".es"]'); els[els.length-1].focus(); };
+$('#docsExtra').addEventListener('input',e=>{ const t=e.target; if(!t.dataset.dx) return; const [i,k]=t.dataset.dx.split('.'); S.docsExtra[+i][k]=t.value; changed(); });
+$('#docsExtra').addEventListener('click',e=>{ const b=e.target.closest('[data-dxdel]'); if(!b) return; S.docsExtra.splice(+b.dataset.dxdel,1); renderDocs(); changed(); });
 
 /* ---------- datos actuales ---------- */
 function horaVal(){ let h=+$('#hH').value%12; if($('#hAP').value==='PM') h+=12; return String(h).padStart(2,'0')+':'+$('#hM').value; }
@@ -906,14 +966,14 @@ function data(){
   const c=CONDOS.find(x=>x.id===S.condo);
   return {condo:c||null, tipo:S.tipo, mod:S.mod, lugarSel:$('#lugar').value, otroEs:$('#otroEs').value, otroEn:$('#otroEn').value,
     enlace:$('#enlace').value, enlaceLuego:$('#enlaceLuego').checked, fecha:$('#fecha').value, hora:horaVal(), emision:$('#emision').value,
-    anioP:anioP(), budgetExtra:S.budgetExtra, blocks:S.blocks, projects:S.projects, sinProy:S.sinProy, rg:esRG(), rgBlocks:RG_FIJO_INI.concat(S.rgBlocks,RG_FIJO_FIN)};
+    anioP:anioP(), budgetExtra:S.budgetExtra, blocks:S.blocks, projects:S.projects, sinProy:S.sinProy, rg:esRG(), rgBlocks:S.rgBlocks.map(b=>b.type==='fijo'&&RG_FIJO_MAP[b.id]?RG_FIJO_MAP[b.id]:b), docsExtra:S.docsExtra};
 }
 
 /* ---------- vista previa HTML ---------- */
 function runsHTML(runs){
   return runs.map(x=>{
     if(typeof x==='string') return esc(x);
-    if(x.line) return '<span class="ln"></span>';
+    if(x.line) return '<span class="ln" contenteditable="false"></span>';
     let t=esc(x.t);
     if(x.u) t=`<span class="u">${t}</span>`;
     if(x.b) t=`<b>${t}</b>`; if(x.i) t=`<i>${t}</i>`;
@@ -924,27 +984,134 @@ function runsHTML(runs){
 function docHTML(doc,logo){
   let h=logo?`<img class="dlogo" src="${logo}" alt="">`:'';
   doc.blocks.forEach(b=>{
-    if(b.k==='title') h+=`<div class="dt">${esc(b.t)}</div>`;
-    else if(b.k==='h') h+=`<div class="dh">${esc(b.t)}</div>`;
-    else if(b.k==='p') h+=`<p class="${b.left?'left':''} ${b.tight?'tight':''}" style="${b.top?`margin-top:${b.tight?8:14}px;`:''}${b.indent?'margin-left:18px;':''}">${runsHTML(b.runs)}</p>`;
+    const P=b._p;
+    if(b.k==='title') h+=`<div class="dt" data-e="${P}">${esc(b.t)}</div>`;
+    else if(b.k==='h') h+=`<div class="dh" data-e="${P}">${esc(b.t)}</div>`;
+    else if(b.k==='p') h+=`<p data-e="${P}" class="${b.left?'left':''} ${b.tight?'tight':''}" style="${b.top?`margin-top:${b.tight?8:14}px;`:''}${b.indent?'margin-left:18px;':''}">${runsHTML(b.runs)}</p>`;
     else if(b.k==='break') h+=`<hr class="pb">${logo?`<img class="dlogo" src="${logo}" alt="">`:''}`;
-    else if(b.k==='sign') h+=`<div class="sg">${b.lines.map(esc).join('<br>')}</div>`;
-    else if(b.k==='sigline') h+=`<div class="sl">${esc(b.t)}</div>`;
+    else if(b.k==='sign') h+=`<div class="sg">${b.lines.map((x,j)=>`<div data-e="${P}.${b._lp[j]}">${esc(x)}</div>`).join('')}</div>`;
+    else if(b.k==='sigline') h+=`<div class="sl" data-e="${P}">${esc(b.t)}</div>`;
     else if(b.k==='agendaVoto'){
-      const tabla=rows=>`<table class="vt"><thead><tr>${b.head.map((x,i)=>`<th${i?' class="c"':''}>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr><td>${runsHTML(r)}</td>${'<td class="c">☐</td>'.repeat(4)}</tr>`).join('')}</tbody></table>`;
+      const tabla=rows=>`<table class="vt"><thead><tr>${b.head.map((x,i)=>`<th${i?' class="c"':''}>${esc(x)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr><td>${r[0]}<span data-e="${r[1]}">${runsHTML(r[2])}</span></td>${'<td class="c">☐</td>'.repeat(4)}</tr>`).join('')}</tbody></table>`;
       h+=`<ol class="agl">${b.items.map(it=>{
         let inner='', grupo=[];
         const vaciar=()=>{ if(grupo.length){ inner+=tabla(grupo); grupo=[]; } };
-        it.subs.forEach((s,i)=>{ if(it.subVota&&it.subVota[i]) grupo.push([(i+1)+'. '].concat(s)); else { vaciar(); inner+=`<ol class="sub"><li><span>${i+1}.</span><span>${runsHTML(s)}</span></li></ol>`; } });
-        vaciar(); if(it.vota) inner+=tabla([it.tabla]);
-        return `<li><span>${it.l}.</span><div>${runsHTML(it.runs)}${inner}</div></li>`; }).join('')}</ol>`;
+        it.subs.forEach((s,i)=>{ const sp=`${P}.s.${it._p}.${it._sp[i]}`; if(it.subVota&&it.subVota[i]) grupo.push([(i+1)+'. ',sp,s]); else { vaciar(); inner+=`<ol class="sub"><li><span>${i+1}.</span><span data-e="${sp}">${runsHTML(s)}</span></li></ol>`; } });
+        vaciar(); if(it.vota) inner+=tabla([['',`${P}.t.${it._p}`,it.tabla]]);
+        return `<li><span>${it.l}.</span><div><span data-e="${P}.i.${it._p}">${runsHTML(it.runs)}</span>${inner}</div></li>`; }).join('')}</ol>`;
     }
-    else if(b.k==='agenda') h+=`<ol class="agl">${b.items.map(it=>`<li><span>${it.l}.</span><div>${runsHTML(it.runs)}${it.subs.length?`<ol class="sub">${it.subs.map((s,i)=>`<li><span>${i+1}.</span><span>${runsHTML(s)}</span></li>`).join('')}</ol>`:''}</div></li>`).join('')}</ol>`;
+    else if(b.k==='agenda') h+=`<ol class="agl">${b.items.map(it=>`<li><span>${it.l}.</span><div><span data-e="${P}.i.${it._p}">${runsHTML(it.runs)}</span>${it.subs.length?`<ol class="sub">${it.subs.map((s,i)=>`<li><span>${i+1}.</span><span data-e="${P}.s.${it._p}.${it._sp[i]}">${runsHTML(s)}</span></li>`).join('')}</ol>`:''}</div></li>`).join('')}</ol>`;
   });
   if(doc.footer==='bird') h+=`<img class="bird" src="${ASSETS._bird}" alt="Hacienda Pinilla">`;
-  if(doc.footer==='poder') h+=`<div class="dfoot">${runsHTML(doc.footerText)}</div>`;
+  if(doc.footer==='poder') h+=`<div class="dfoot" data-e="f">${runsHTML(doc.footerText)}</div>`;
   if(doc.footer==='pub') h+=`<div class="dfoot">Administradora de Condominios Pinilla (ACPI), Limitada<br>3-102-296571</div><img class="bird" src="${ASSETS._bird}" alt="Hacienda Pinilla">`;
   return h;
+}
+
+/* ---------- edición manual del texto ----------
+   S.edits[documento][ruta] = {runs, base}. "base" es el texto que generaba la herramienta cuando se editó:
+   si los datos del formulario cambian y ese texto ya no es igual, el cambio manual queda marcado en rojo. */
+const runsTxt=r=>(r||[]).map(x=>typeof x==='string'?x:(x.line?'____':x.t)).join('');
+const LETRAS_AG='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function unidades(doc){   // lista de [ruta, obtener, poner] de cada texto editable del documento
+  const u=[];
+  doc.blocks.forEach((b,bi)=>{
+    if(b.k==='title'||b.k==='h'||b.k==='sigline') u.push([''+bi,()=>[b.t],r=>{ b.t=runsTxt(r); }]);
+    else if(b.k==='p') u.push([''+bi,()=>b.runs,r=>{ b.runs=r; }]);
+    else if(b.k==='sign') b.lines.forEach((x,j)=>u.push([bi+'.'+j,()=>[b.lines[j]],r=>{ b.lines[j]=runsTxt(r); }]));
+    else if(b.k==='agenda'||b.k==='agendaVoto') b.items.forEach((it,k)=>{
+      u.push([bi+'.i.'+k,()=>it.runs,r=>{ it.runs=r; }]);
+      it.subs.forEach((x,j)=>u.push([bi+'.s.'+k+'.'+j,()=>it.subs[j],r=>{ it.subs[j]=r; }]));
+      if(it.vota) u.push([bi+'.t.'+k,()=>it.tabla,r=>{ it.tabla=r; }]);
+    });
+  });
+  if(doc.footer==='poder') u.push(['f',()=>doc.footerText,r=>{ doc.footerText=r; }]);
+  return u;
+}
+/* Aplica los cambios manuales a una copia del documento y anota las rutas originales para la vista previa */
+function aplicarEdiciones(key,doc,choques){
+  doc=JSON.parse(JSON.stringify(doc));
+  const E=S.edits[key]||{};
+  doc.blocks.forEach((b,bi)=>{ b._p=bi; if(b.k==='sign') b._lp=b.lines.map((x,j)=>j); if(b.items) b.items.forEach((it,k)=>{ it._p=k; it._sp=it.subs.map((x,j)=>j); }); });
+  unidades(doc).forEach(([ruta,get,put])=>{ const e=E[ruta]; if(!e) return; if(runsTxt(get())!==e.base) choques.push(ruta); put(JSON.parse(JSON.stringify(e.runs))); });
+  // Lo que quedó vacío se quita (párrafos, puntos y subpuntos borrados a mano) y la agenda se vuelve a rotular
+  const vacio=r=>!runsTxt(r).trim() && !(r||[]).some(x=>x&&x.line);
+  doc.blocks=doc.blocks.filter(b=>{
+    if(b.k==='p') return !vacio(b.runs);
+    if(b.k==='title'||b.k==='h'||b.k==='sigline') return !!(b.t||'').trim();
+    if(b.k==='sign'){ const keep=b.lines.map(x=>!!x.trim()); b._lp=b._lp.filter((x,j)=>keep[j]); b.lines=b.lines.filter((x,j)=>keep[j]); return b.lines.length>0; }
+    if(b.items){
+      b.items.forEach(it=>{ const keep=it.subs.map(x=>!vacio(x)); ['subs','_sp','subVota'].forEach(f=>{ if(it[f]) it[f]=it[f].filter((x,j)=>keep[j]); }); });
+      b.items=b.items.filter(it=>!vacio(it.runs)||it.subs.length);
+      b.items.forEach((it,i)=>{ it.l=LETRAS_AG[i]; });
+    }
+    return true;
+  });
+  return doc;
+}
+/* Convierte lo escrito en la vista previa en texto con formato (negrita, cursiva, enlaces) */
+function leerTexto(el){
+  const out=[];
+  const add=(t,st)=>{ if(!t) return; const l=out[out.length-1]; const same=l&&typeof l==='object'&&!l.line&&!!l.b===!!st.b&&!!l.i===!!st.i&&!!l.u===!!st.u;
+    if(same) l.t+=t; else out.push(Object.assign({t},st.b?{b:1}:{},st.i?{i:1}:{},st.u?{u:1}:{})); };
+  const nl=()=>{ const l=out[out.length-1]; if(l&&!l.line&&!/\n$/.test(l.t)) add('\n',{}); };
+  (function walk(n,st){
+    n.childNodes.forEach(c=>{
+      if(c.nodeType===3){ add(c.nodeValue.replace(/\u200b/g,'').replace(/\u00a0/g,' '),st); return; }
+      if(c.nodeType!==1) return;
+      const tg=c.tagName, fw=c.style&&c.style.fontWeight;
+      if(c.classList.contains('ln')){ out.push({t:'',line:1}); return; }
+      if(tg==='BR'){ add('\n',{}); return; }
+      const blk=(tg==='DIV'||tg==='P');
+      if(blk) nl();
+      walk(c,{b:st.b||tg==='B'||tg==='STRONG'||fw==='bold'||+fw>=600, i:st.i||tg==='I'||tg==='EM'||(c.style&&c.style.fontStyle==='italic'), u:st.u||c.classList.contains('u')||tg==='A'});
+      if(blk) nl();
+    });
+  })(el,{});
+  while(out.length){ const l=out[out.length-1]; if(l.line) break; l.t=l.t.replace(/\s+$/,''); if(l.t) break; out.pop(); }
+  return out.map(x=>(!x.line&&!x.b&&!x.i&&!x.u)?x.t:x);
+}
+const normRuns=r=>JSON.stringify((r||[]).map(x=>typeof x==='string'?{t:x}:x).reduce((a,x)=>{ const l=a[a.length-1]; if(l&&!l.line&&!x.line&&!!l.b===!!x.b&&!!l.i===!!x.i&&!!l.u===!!x.u){ l.t+=x.t; } else a.push({t:x.t||'',b:!!x.b,i:!!x.i,u:!!x.u,line:!!x.line}); return a; },[]).filter(x=>x.t||x.line));
+let editando=false, foto=null;
+function ask(t,p,ok,no){ return new Promise(res=>{ const d=$('#ask'); $('#askT').textContent=t; $('#askP').textContent=p; $('#askOk').textContent=ok; $('#askNo').textContent=no;
+  $('#askOk').onclick=()=>{ d.close(); res(true); }; $('#askNo').onclick=()=>{ d.close(); res(false); }; d.oncancel=()=>res(false); d.showModal(); }); }
+const nombreDoc=k=>k==='msg'?'el mensaje':(last&&last.o.docs[k]?last.o.docs[k].name:'');
+function empezarEdicion(){
+  if(S.tab==='msg' && S.msgMode==='wa'){ S.msgMode='mail'; syncPressed(); update(); }
+  editando=true; const sh=$('#sheet'); sh.classList.add('editing');
+  const els=[...sh.querySelectorAll('[data-e]')]; if(S.tab==='msg') els.push($('#asunto'));
+  foto=new Map(); els.forEach(el=>{ el.contentEditable='true'; foto.set(el,normRuns(el.id==='asunto'?[el.textContent]:leerTexto(el))); });
+  $('#edStart').hidden=true; $('#edTools').hidden=false; update();
+  const f=els[0]; if(f) f.focus();
+}
+function terminarEdicion(){ editando=false; foto=null; $('#sheet').classList.remove('editing'); $('#asunto').removeAttribute('contenteditable'); $('#edStart').hidden=false; $('#edTools').hidden=true; update(); }
+function cambiosEditados(){
+  const res=[]; if(!foto) return res;
+  foto.forEach((antes,el)=>{ const r=el.id==='asunto'?[el.textContent.replace(/\s+/g,' ').trim()]:leerTexto(el); if(normRuns(r)!==antes) res.push([el.id==='asunto'?'asunto':el.dataset.e,r]); });
+  return res;
+}
+$('#edStart').onclick=()=>empezarEdicion();
+$$('#edTools [data-cmd]').forEach(b=>{ b.onmousedown=e=>e.preventDefault(); b.onclick=()=>document.execCommand(b.dataset.cmd,false,null); });
+$('#edCancel').onclick=async()=>{ if(cambiosEditados().length && !await ask('¿Descartar los cambios?','Lo que escribió en '+nombreDoc(S.tab)+' no se guardará.','Descartar','Seguir editando')) return; terminarEdicion(); };
+$('#edSave').onclick=async()=>{
+  const ch=cambiosEditados(); if(!ch.length){ terminarEdicion(); toast('No hubo cambios'); return; }
+  if(!await ask('¿Guardar los cambios?',`Se aplicarán ${ch.length} cambio${ch.length>1?'s':''} a ${nombreDoc(S.tab)}, en la vista previa y en ${S.tab==='msg'?'el texto que se copia':'el PDF'}. Se borran al empezar una convocatoria nueva.`,'Guardar cambios','Seguir editando')) return;
+  const key=S.tab, orig=origenes(key); const E=S.edits[key]=S.edits[key]||{};
+  ch.forEach(([ruta,r])=>{ const o=orig[ruta]; if(o && normRuns(o)===normRuns(r)) delete E[ruta]; else E[ruta]={runs:r, base:runsTxt(o)}; });
+  if(!Object.keys(E).length) delete S.edits[key];
+  terminarEdicion(); changed(); toast('Cambios guardados');
+};
+/* Texto que genera la herramienta (sin cambios manuales), por ruta */
+function origenes(key){
+  const o={}; if(!last) return o;
+  if(key==='msg'){ o.m=last.mOrig.all; o.asunto=[last.mOrig.asunto]; return o; }
+  unidades(JSON.parse(JSON.stringify(last.oOrig.docs[key]))).forEach(([ruta,get])=>{ o[ruta]=get(); });
+  return o;
+}
+async function restaurar(){
+  const n=Object.keys(S.edits[S.tab]||{}).length;
+  if(!await ask('¿Restaurar el texto original?',`Se borran ${n===1?'el cambio hecho':'los '+n+' cambios hechos'} a mano en ${nombreDoc(S.tab)}.`,'Restaurar','Cancelar')) return;
+  delete S.edits[S.tab]; changed(); toast('Texto original restaurado');
 }
 
 /* ---------- mensaje (correo y WhatsApp) ---------- */
@@ -960,7 +1127,7 @@ function buildMsg(d,o){
   const linkEN = virtual ? (d.enlaceLuego?[{t:'The access link will be sent prior to the Assembly.'}]:[{t:'Access link: '},{t:d.enlace.trim()||'[link]',v:1,m:!d.enlace.trim()}]) : null;
   const docs=[]; const Y=d.anioP||'[año]';
   $$('.doc').forEach(ch=>{ if(!ch.checked) return; if(ch.id==='docPres') docs.push([`Presupuesto ${Y}.`,`Budget ${Y}.`]); else if(ch.id==='docProy') docs.push([`Propuesta de proyectos ${Y}.`,`Project proposals ${Y}.`]); else docs.push([ch.dataset.es,ch.dataset.en]); });
-  if($('#docOtro').checked) docs.push([($('#docOtroEs').value.trim()||'[documento]').replace(/\.?$/,'.'),($('#docOtroEn').value.trim()||'[document]').replace(/\.?$/,'.')]);
+  (S.docsExtra||[]).forEach(x=>docs.push([((x.es||'').trim()||'[documento]').replace(/\.?$/,'.'),((x.en||'').trim()||'[document]').replace(/\.?$/,'.')]));
   const tES=r.tES, tEN=r.tEN, modES=virtual?' Virtual':'', modEN=virtual?'Virtual ':'';
   const ES=[b('AVISO DE CONVOCATORIA'),'\n','Estimados propietarios del ',nomES,'.\n',
     'Por este medio y de conformidad con el artículo 25 de la Ley Reguladora de Propiedad en Condominio se convoca a la Asamblea ',tES,' de Condóminos de ',legal,', con cédula de persona jurídica número ',r.cedN,'. Esta se celebrará, en idioma español, ',lES,', el ',Object.assign({},r.fES,{b:1}),{t:', ',b:1},Object.assign({},r.hES,{b:1}),'\n',
@@ -1005,10 +1172,16 @@ function update(){
   $('#otroBox').hidden = $('#lugar').value!=='otro';
   $('#virtualBox').hidden = S.mod!=='virtual';
   $('#enlace').disabled = $('#enlaceLuego').checked;
-  $('#docOtroBox').hidden = !$('#docOtro').checked;
 
   const d=data(); const o=CORE.build(d); const m=buildMsg(d,o);
-  last={d,o,m};
+  // cambios manuales (se aplican sobre una copia; los originales quedan para comparar)
+  const oOrig={docs:Object.assign({},o.docs)}, mOrig={all:m.all,asunto:m.asunto}, choques={};
+  Object.keys(o.docs).forEach(k=>{ const c=[]; o.docs[k]=aplicarEdiciones(k,o.docs[k],c); if(c.length) choques[k]=c; });
+  const Em=S.edits.msg||{}, cm=[];
+  if(Em.m){ if(runsTxt(m.all)!==Em.m.base) cm.push('m'); m.all=Em.m.runs; }
+  if(Em.asunto){ if(m.asunto!==Em.asunto.base) cm.push('asunto'); m.asunto=runsTxt(Em.asunto.runs); }
+  if(cm.length) choques.msg=cm;
+  last={d,o,m,oOrig,mOrig,choques};
   const c=d.condo;
   // alertas
   const ca=$('#condoAlert');
@@ -1039,9 +1212,25 @@ function update(){
   $('#docActions').hidden=isMsg; $('#msgActions').hidden=!isMsg;
   $('#copyAsunto').hidden = S.msgMode==='wa';
   const sh=$('#sheet');
-  if(isMsg){ sh.classList.add('msg'); sh.innerHTML = S.msgMode==='wa' ? esc(segText(m.all,'wa')) : segText(m.all,'html'); $('#asunto').textContent=m.asunto; }
+  // aviso de cambios manuales
+  const nEd=Object.keys(S.edits[S.tab]||{}).length, nCh=(choques[S.tab]||[]).length;
+  const otros=Object.keys(choques).filter(k=>k!==S.tab).map(k=>k==='msg'?'Mensaje':(o.docs[k]?o.docs[k].name:k));
+  const en=$('#edNote');
+  if(editando){ en.hidden=false; en.className='ednote warn'; en.textContent='Modo edición: escriba directamente sobre el documento. Al terminar, toque «Guardar cambios».'; }
+  else if(nEd||otros.length){ en.hidden=false; en.className='ednote '+((nCh||otros.length)?'alert':'warn');
+    en.innerHTML=(nEd?`${nCh?`<strong>${nCh} texto${nCh>1?'s':''} editado${nCh>1?'s':''} a mano ya no coincide${nCh>1?'n':''} con los datos del formulario</strong> (en rojo). Revíselo${nCh>1?'s':''} o restaure el original. `:''}Este documento tiene ${nEd} cambio${nEd>1?'s':''} hecho${nEd>1?'s':''} a mano (en azul).<button class="chip" type="button" id="edRestore">Restaurar texto original</button>`:'')
+      +(otros.length?`<div${nEd?' class="mt"':''}>Hay textos editados a mano que ya no coinciden con los datos en: <strong>${otros.map(esc).join(', ')}</strong>.</div>`:'');
+    const rb=$('#edRestore'); if(rb) rb.onclick=restaurar; }
+  else en.hidden=true;
+  $('#edLeg').hidden=!Object.keys(S.edits).length;
+  if(editando){ ['#dlOne','#dlAll','#copyMsg','#copyAsunto'].forEach(s=>$(s).disabled=true); $('#hint').textContent='Guarde o cancele la edición del texto para poder descargar y copiar.'; return; }
+  if(isMsg){ sh.classList.add('msg'); sh.innerHTML = S.msgMode==='wa' ? esc(segText(m.all,'wa')) : `<div data-e="m">${segText(m.all,'html')}</div>`; $('#asunto').textContent=m.asunto; }
   else { sh.classList.remove('msg'); sh.innerHTML = docHTML(o.docs[S.tab], c?ASSETS[c.id]:null); }
   sh.classList.add('hl');
+  const Ek=S.edits[S.tab]||{};
+  sh.querySelectorAll('[data-e]').forEach(el=>{ const r=el.dataset.e; el.classList.toggle('ed',!!Ek[r]); el.classList.toggle('edx',(choques[S.tab]||[]).includes(r)); });
+  if(isMsg && S.msgMode==='wa' && Ek.m) sh.classList.add('edwa');
+  const as=$('#asunto'); as.classList.toggle('v',false); as.style.background=Ek.asunto?((choques.msg||[]).includes('asunto')?'var(--bad-soft)':'#e3eefa'):'';
 
   const ok = !o.miss.length && $$('.cf').every(x=>x.checked);
   ['#dlOne','#dlAll','#copyMsg','#copyAsunto'].forEach(s=>$(s).disabled=!ok);
@@ -1051,13 +1240,13 @@ function update(){
 }
 
 /* ---------- eventos generales ---------- */
-['#lugar','#otroEs','#otroEn','#enlace','#enlaceLuego','#fecha','#hH','#hM','#hAP','#emision','#docOtro','#docOtroEs','#docOtroEn'].forEach(s=>{ $(s).addEventListener('input',()=>changed()); $(s).addEventListener('change',()=>changed()); });
+['#lugar','#otroEs','#otroEn','#enlace','#enlaceLuego','#fecha','#hH','#hM','#hAP','#emision'].forEach(s=>{ $(s).addEventListener('input',()=>changed()); $(s).addEventListener('change',()=>changed()); });
 $$('.doc').forEach(x=>x.addEventListener('change',()=>changed()));
 $('#fecha').addEventListener('change',()=>{ const f=CORE.parseF($('#fecha').value); if(f&&!S.anioTocado){ $('#anioP').value=f.getFullYear()+1; renderAgenda(); changed(); } });
 $('#anioP').addEventListener('input',()=>{ S.anioTocado=true; renderAgenda(); changed(); });
 $$('.cf').forEach(x=>x.addEventListener('change',update));
-$$('#tabs button').forEach(b=>b.onclick=()=>{ S.tab=b.dataset.t; syncPressed(); update(); save(); });
-$$('#msgMode button').forEach(b=>b.onclick=()=>{ S.msgMode=b.dataset.v; syncPressed(); update(); });
+$$('#tabs button').forEach(b=>b.onclick=()=>{ if(editando){ toast('Guarde o cancele la edición primero'); return; } S.tab=b.dataset.t; syncPressed(); update(); save(); });
+$$('#msgMode button').forEach(b=>b.onclick=()=>{ if(editando){ toast('Guarde o cancele la edición primero'); return; } S.msgMode=b.dataset.v; syncPressed(); update(); });
 
 /* ---------- PDF ---------- */
 function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2600); }
@@ -1083,18 +1272,22 @@ $('#copyMsg').onclick=async()=>{ const m=last.m; const ok = S.msgMode==='wa'? aw
 $('#copyAsunto').onclick=async()=>{ const ok=await copy(last.m.asunto); toast(ok?'Asunto copiado':'No se pudo copiar.'); };
 
 /* ---------- borrador (se guarda en este navegador) ---------- */
-const FIELDS=['lugar','otroEs','otroEn','enlace','fecha','hH','hM','hAP','emision','anioP','docOtroEs','docOtroEn'];
-function save(){ try{ const f={}; FIELDS.forEach(k=>f[k]=$('#'+k).value); f.enlaceLuego=$('#enlaceLuego').checked; f.docOtro=$('#docOtro').checked; f.docs=$$('.doc').map(x=>x.checked);
+const FIELDS=['lugar','otroEs','otroEn','enlace','fecha','hH','hM','hAP','emision','anioP'];
+function save(){ try{ const f={}; FIELDS.forEach(k=>f[k]=$('#'+k).value); f.enlaceLuego=$('#enlaceLuego').checked; f.docs=$$('.doc').map(x=>x.checked);
   localStorage.setItem(DRAFT,JSON.stringify({S,f})); }catch(e){} }
-function load(){ try{ const raw=localStorage.getItem(DRAFT); if(!raw) return false; const {S:s,f}=JSON.parse(raw); S=Object.assign(fresh(),s); if(Array.isArray(S.rgBlocks)) S.rgBlocks=S.rgBlocks.filter(b=>!(b.type==='punto'&&(RG_FIJO_ES.includes(b.es)||/protocolizar|Informe de gestión|fecha de la Asamblea Ordinaria/i.test(b.es||''))));  /* borradores viejos: los puntos fijos ya no se guardan */
-  FIELDS.forEach(k=>{ if(f[k]!==undefined) $('#'+k).value=f[k]; }); $('#enlaceLuego').checked=!!f.enlaceLuego; $('#docOtro').checked=!!f.docOtro; (f.docs||[]).forEach((v,i)=>{ const el=$$('.doc')[i]; if(el) el.checked=v; }); return true; }catch(e){ return false; } }
+function load(){ try{ const raw=localStorage.getItem(DRAFT); if(!raw) return false; const {S:s,f}=JSON.parse(raw); S=Object.assign(fresh(),s); if(!S.edits||typeof S.edits!=='object') S.edits={}; if(Array.isArray(S.rgBlocks)&&!S.rgBlocks.some(b=>b.type==='fijo')) S.rgBlocks=S.rgBlocks.filter(b=>!(b.type==='punto'&&(RG_FIJO_ES.includes(b.es)||/protocolizar|Informe de gestión|fecha de la Asamblea Ordinaria/i.test(b.es||''))));  /* borradores viejos: los puntos fijos ya no se guardan */
+  FIELDS.forEach(k=>{ if(f[k]!==undefined) $('#'+k).value=f[k]; }); $('#enlaceLuego').checked=!!f.enlaceLuego;
+  if(!Array.isArray(s.docsExtra)) S.docsExtra = f.docOtro?[{es:f.docOtroEs||'',en:f.docOtroEn||''}]:[];   /* borradores viejos: «Otro documento» */
+  if(!S.blocks.some(b=>b.type==='fijo')) S.blocks=[F_('A'),F_('B'),F_('C'),F_('D'),F_('bud')].concat(S.blocks,[F_('Y'),F_('Z')]);
+  if(!S.rgBlocks.some(b=>b.type==='fijo')) S.rgBlocks=[F_('A'),F_('B'),F_('C'),F_('rgD'),F_('rgE')].concat(S.rgBlocks,[F_('rgI'),F_('Z')]);
+  (f.docs||[]).forEach((v,i)=>{ const el=$$('.doc')[i]; if(el) el.checked=v; }); return true; }catch(e){ return false; } }
 function todayISO(){ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
 function defaults(){ FIELDS.forEach(k=>{ const el=$('#'+k); if(el.tagName!=='SELECT') el.value=''; });
   $('#lugar').value='oficinas'; $('#hH').value='8'; $('#hM').value='30'; $('#hAP').value='AM'; $('#emision').value=todayISO();
-  $('#enlaceLuego').checked=false; $('#docOtro').checked=false; $$('.doc').forEach(x=>x.checked=true); }
-$('#reset').onclick=()=>{ S=fresh(); defaults(); try{localStorage.removeItem(DRAFT);}catch(e){} syncPressed(); renderAgenda(); changed(); window.scrollTo({top:0}); toast('Convocatoria nueva'); };
+  $('#enlaceLuego').checked=false; $$('.doc').forEach(x=>x.checked=true); }
+$('#reset').onclick=()=>{ if(editando) terminarEdicion(); S=fresh(); defaults(); try{localStorage.removeItem(DRAFT);}catch(e){} syncPressed(); renderAgenda(); renderDocs(); changed(); window.scrollTo({top:0}); toast('Convocatoria nueva'); };
 
-defaults(); load(); syncPressed(); renderAgenda(); update();
+defaults(); load(); syncPressed(); renderAgenda(); renderDocs(); update();
 </script>
 
 </body>
