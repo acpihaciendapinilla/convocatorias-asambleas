@@ -72,6 +72,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .ag-fixed.mov{grid-template-columns:28px minmax(0,1fr) auto auto;align-items:center}
 .ag-fixed.mov .icons{display:flex;gap:4px}
 .ag-fixed.mov .ib{width:28px;height:28px}
+.ag-subfixed.mov{display:flex;align-items:center;gap:8px}
+.ag-subfixed.mov>span:first-child{flex:1 1 auto;min-width:0}
+.ag-subfixed.mov .icons{display:flex;gap:4px}
+.ag-subfixed.mov .ib{width:28px;height:28px}
 .lock{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
 .ag-subs{display:flex;flex-direction:column;gap:6px;margin:2px 0 4px 20px}
 .ag-subfixed{font-size:.88rem;color:var(--muted);padding:2px 0}
@@ -446,7 +450,8 @@ var CORE = (function(){
       var F=FIJO[pub==='proxy'?'enp':(pub?'pub':lang)], items=[], yv=Y||'[año]'; pub=pub===true;
       var txtL=lang==='es'?'punto en español':'punto en inglés';
       /* Los puntos fijos pueden venir dentro de la lista ({type:'fijo', id}) para que el administrador los ordene; si no vienen, van en su lugar de siempre */
-      function fijo(bk){ if(bk.id==='bud'){ var bs=[[F.b1(yv)],[F.b2(yv)]]; (d.budgetExtra||[]).forEach(function(x){ bs.push(texto(x[lang],lang,false,pub,lang==='es'?'subpunto en español':'subpunto en inglés')); }); items.push({runs:[F.bud(yv)],subs:bs,fijo:'bud'}); }
+      function fijo(bk){ if(bk.id==='bud'){ var be=d.budgetExtra||[], bs=be.some(function(x){ return x.fijo; })?[]:[[F.b1(yv)],[F.b2(yv)]];   /* los dos subpuntos fijos pueden venir dentro de la lista ({fijo:'b1'|'b2'}) para ordenarlos */
+        be.forEach(function(x){ bs.push(x.fijo?[F[x.fijo](yv)]:texto(x[lang],lang,false,pub,lang==='es'?'subpunto en español':'subpunto en inglés')); }); items.push({runs:[F.bud(yv)],subs:bs,fijo:'bud'}); }
         else if(F[bk.id]) items.push({runs:[F[bk.id]],subs:[],fijo:bk.id}); }
       if(d.rg){
         var conFijosRG=(d.rgBlocks||[]).some(function(b){ return b.type==='fijo'; });
@@ -811,7 +816,7 @@ const DRAFT='convocatorias-borrador-v1';
 
 let S = fresh();
 function fresh(){ return {condo:null,tipo:null,mod:null,tab:'conv',msgMode:'mail',anioTocado:false,
-  budgetExtra:[], blocks:BASE_BLOCKS(), projects:[blank()], sinProy:false, rgBlocks:BASE_RG(), edits:{}, docsExtra:[]}; }
+  budgetExtra:[{fijo:'b1'},{fijo:'b2'}], blocks:BASE_BLOCKS(), projects:[blank()], sinProy:false, rgBlocks:BASE_RG(), edits:{}, docsExtra:[]}; }
 
 /* ---------- tarjetas de condominio ---------- */
 CONDOS.forEach(c=>{
@@ -891,10 +896,13 @@ function renderAgenda(){
     if(bk.type==='fijo'){
       if(bk.id!=='bud'){ h+=filaFija(L[li++],esc(FIJO_TXT[bk.id]),'Fijo','blocks',bi,S.blocks.length); return; }
       // Presupuesto: título y dos subpuntos fijos; se le pueden agregar subpuntos
-      const n=S.budgetExtra.length+2;
+      const n=S.budgetExtra.length;
       h+=`<div class="ag-item${bk._c?' col':''}"><div class="ag-head">${colBtn('blocks.'+bi,bk._c)}<span class="l">${L[li++]}.</span><span class="t">Presupuesto ${esc(Y)}: ${bk._c?`<small>· ${n} subpuntos</small>`:'<span class="lock">Fijo</span>'}</span>${sinBorrar(iconBtns('blocks',bi,S.blocks.length))}</div>`;
-      h+=`<div class="ag-subs"><div class="ag-subfixed">1. Presentación y análisis de la propuesta del presupuesto para el año ${esc(Y)}.</div><div class="ag-subfixed">2. Votación y aprobación de presupuesto y cuotas propuestas para el ${esc(Y)}.</div>`;
-      S.budgetExtra.forEach((x,i)=>{ h+=subRow(i+3,'Subpunto de presupuesto',iconBtns('budgetExtra',i,S.budgetExtra.length),pair(x,'budgetExtra.'+i,'Subpunto en español','Subpunto en inglés')); });
+      const subFijo={b1:`Presentación y análisis de la propuesta del presupuesto para el año ${esc(Y)}.`, b2:`Votación y aprobación de presupuesto y cuotas propuestas para el ${esc(Y)}.`};
+      h+=`<div class="ag-subs">`;
+      S.budgetExtra.forEach((x,i)=>{ const ic=iconBtns('budgetExtra',i,S.budgetExtra.length);
+        if(x.fijo) h+=`<div class="ag-subfixed mov"><span>${i+1}. ${subFijo[x.fijo]}</span><span class="lock">Fijo</span>${sinBorrar(ic)}</div>`;
+        else h+=subRow(i+1,'Subpunto de presupuesto',ic,pair(x,'budgetExtra.'+i,'Subpunto en español','Subpunto en inglés')); });
       h+=`<div class="chips"><button class="add" type="button" data-add="budgetExtra">+ Subpunto de presupuesto</button><span class="lab">Sugeridos:</span>${SUG_BUDGET.map((s,i)=>`<button class="chip" type="button" data-sug="budget" data-i="${i}" ${S.budgetExtra.some(x=>x.es===s.es)?'disabled':''}>${esc(s.k)}</button>`).join('')}</div></div></div>`;
       return;
     }
@@ -1280,6 +1288,7 @@ function load(){ try{ const raw=localStorage.getItem(DRAFT); if(!raw) return fal
   if(!Array.isArray(s.docsExtra)) S.docsExtra = f.docOtro?[{es:f.docOtroEs||'',en:f.docOtroEn||''}]:[];   /* borradores viejos: «Otro documento» */
   if(!S.blocks.some(b=>b.type==='fijo')) S.blocks=[F_('A'),F_('B'),F_('C'),F_('D'),F_('bud')].concat(S.blocks,[F_('Y'),F_('Z')]);
   if(!S.rgBlocks.some(b=>b.type==='fijo')) S.rgBlocks=[F_('A'),F_('B'),F_('C'),F_('rgD'),F_('rgE')].concat(S.rgBlocks,[F_('rgI'),F_('Z')]);
+  if(!S.budgetExtra.some(x=>x.fijo)) S.budgetExtra=[{fijo:'b1'},{fijo:'b2'}].concat(S.budgetExtra);   /* borradores viejos */
   (f.docs||[]).forEach((v,i)=>{ const el=$$('.doc')[i]; if(el) el.checked=v; }); return true; }catch(e){ return false; } }
 function todayISO(){ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); }
 function defaults(){ FIELDS.forEach(k=>{ const el=$('#'+k); if(el.tagName!=='SELECT') el.value=''; });
