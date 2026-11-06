@@ -1141,21 +1141,21 @@ function buildMsg(d,o){
     'Por este medio y de conformidad con el artículo 25 de la Ley Reguladora de Propiedad en Condominio se convoca a la Asamblea ',tES,' de Condóminos de ',legal,', con cédula de persona jurídica número ',r.cedN,'. Esta se celebrará, en idioma español, ',lES,', el ',Object.assign({},r.fES,{b:1}),{t:', ',b:1},Object.assign({},r.hES,{b:1}),'\n',
     ...(link?[...link,'\n']:[]),
     ...(docs.length?['\n','Encontrará adjuntos los siguientes documentos:','\n',...docs.flatMap(x=>['• '+x[0],'\n'])]:[]),
-    '\n',b('CONSIDERACIONES'),'\n','Para efectos de la debida acreditación y participación en la Asamblea ',V({t:(tES.m?'[tipo]':tES.t)+modES,m:tES.m}),', se solicita remitir previamente a la Administración la documentación correspondiente, según sea el caso:','\n',
+    '\n',b('CONSIDERACIONES'),'\n','Para efectos de la debida acreditación y participación en la Asamblea ',V({t:(tES.m?'[tipo]':tES.t)+modES,m:tES.m}),', se solicita remitir previamente a la Administración la documentación correspondiente, según sea el caso:','\n','\n',
     '1. ',b('Propietarios:'),' documento que acredite la titularidad de la finca filial que representan.','\n',
     '2. ',b('Representantes de propietarios:'),' deberán remitir el Poder Especial correspondiente, debidamente otorgado por el propietario. Para estos efectos, se adjunta el formato de Poder Especial que podrá ser utilizado.','\n',
-    '3. ',b('Representantes de personas jurídicas:'),' deberán remitir una certificación de personería jurídica vigente que acredite sus facultades de representación.','\n',
-    'Agradecemos enviar la documentación requerida con suficiente anticipación vía correo electrónico, a fin de realizar la verificación correspondiente antes de la celebración de la Asamblea y facilitar el proceso de acreditación de los participantes.','\n',
+    '3. ',b('Representantes de personas jurídicas:'),' deberán remitir una certificación de personería jurídica vigente que acredite sus facultades de representación.','\n','\n',
+    'Agradecemos enviar la documentación requerida con suficiente anticipación vía correo electrónico, a fin de realizar la verificación correspondiente antes de la celebración de la Asamblea y facilitar el proceso de acreditación de los participantes.','\n','\n',
     b('Aviso de privacidad:'),' Les informamos que esta Asamblea General ',tES,' será grabada en su totalidad (audio y video) con fines de registro oficial y para la correcta elaboración de la minuta. Al participar en esta sesión, usted otorga su consentimiento para la grabación.'];
   const EN=[b('NOTICE OF MEETING'),'\n','Dear property owners in ',nomEN,'\n',
     'In accordance with Article 25 of the Condominium Property Law, we hereby call the ',tEN,' Assembly of Owners in ',legalEN,', legal entity number ',r.cedN,', to be held in Spanish ',lEN,', on ',Object.assign({},r.fEN,{b:1}),{t:', ',b:1},Object.assign({},r.hEN,{b:1}),'\n',
     ...(linkEN?[...linkEN,'\n']:[]),
     ...(docs.length?['\n','Please find attached the following documents:','\n',...docs.flatMap(x=>['• '+x[1],'\n'])]:[]),
-    '\n',b('CONSIDERATIONS'),'\n','For proper accreditation and participation in the ',V({t:modEN+(tEN.m?'[type]':tEN.t)+' General Assembly',m:tEN.m}),', participants are requested to submit the corresponding documentation to the Administration in advance, as applicable:','\n',
+    '\n',b('CONSIDERATIONS'),'\n','For proper accreditation and participation in the ',V({t:modEN+(tEN.m?'[type]':tEN.t)+' General Assembly',m:tEN.m}),', participants are requested to submit the corresponding documentation to the Administration in advance, as applicable:','\n','\n',
     '1. ',b('Property Owners:'),' documentation confirming ownership of the condominium unit they represent.','\n',
     '2. ',b('Representatives of Property Owners:'),' must submit the corresponding Special Power of Attorney, duly granted by the property owner. For this purpose, a Special Power of Attorney form is attached and may be used.','\n',
-    '3. ',b('Representatives of Legal Entities:'),' must submit a current legal representation certificate confirming their authority to represent the legal entity.','\n',
-    'We kindly request that all required documentation be submitted by email sufficiently in advance, so that the corresponding verification can be completed prior to the Assembly and the participant accreditation process can be facilitated.','\n',
+    '3. ',b('Representatives of Legal Entities:'),' must submit a current legal representation certificate confirming their authority to represent the legal entity.','\n','\n',
+    'We kindly request that all required documentation be submitted by email sufficiently in advance, so that the corresponding verification can be completed prior to the Assembly and the participant accreditation process can be facilitated.','\n','\n',
     b('Privacy notice:'),' Please be advised that this ',tEN,' General Assembly will be recorded in its entirety (audio and video) for official record-keeping purposes and for the accurate preparation of the minutes. By participating in this session, you grant your consent to the recording.'];
   const all=[...ES,'\n\n____________________________________________\n\n',...EN];
   const nm=c?c.nombre:'[condominio]';
